@@ -104,3 +104,4 @@ plt.suptitle("Obervables evolving with SME")
 fig.tight_layout()
 plt.show()
 
+plt.savefig("signalrecord_SME")
