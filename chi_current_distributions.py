@@ -108,6 +108,12 @@ def simulate_current_averages(
 def save_plot(
     path: Path,
     data_by_chi: dict[float, np.ndarray],
+    *,
+    final_time: float,
+    output_dt: float,
+    internal_dt: float,
+    transient_time: float,
+    trajectories: int,
 ) -> None:
     """Use stacked densities and connected means to expose the shift."""
 
@@ -224,12 +230,20 @@ def save_plot(
     axis.text(
         0.99,
         0.98,
-        "Filled curves: density\nPoints/bars: mean ± 95% CI",
+        (
+            rf"Integrator step: $dt={internal_dt:g}$" "\n"
+            rf"Record interval: $\Delta t={output_dt:g}$" "\n"
+            rf"Trajectories: $N_{{\rm traj}}={trajectories}$ per $\chi$" "\n"
+            rf"Averaging window: ${transient_time:g}\leq t\leq{final_time:g}$"
+            "\n\n"
+            "Filled curves: density\nPoints/bars: mean ± 95% CI"
+        ),
         transform=axis.transAxes,
         ha="right",
         va="top",
         fontsize=9,
         color="0.35",
+        bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.82, "pad": 3},
     )
     figure.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(figure)
@@ -311,7 +325,15 @@ def main() -> None:
             flush=True,
         )
 
-    save_plot(args.figure_output, data_by_chi)
+    save_plot(
+        args.figure_output,
+        data_by_chi,
+        final_time=args.final_time,
+        output_dt=args.output_dt,
+        internal_dt=args.internal_dt,
+        transient_time=args.transient_time,
+        trajectories=args.trajectories,
+    )
     save_summary(args.summary_output, data_by_chi)
     np.savez(
         args.samples_output,
