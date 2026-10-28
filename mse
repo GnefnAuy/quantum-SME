@@ -1,0 +1,88 @@
+import numpy as np
+from qutip import *
+import matplotlib.pyplot as plt
+def driving_func(t,args):
+    A = args['A']
+    w = args['w']
+    driving = A * np.cos(w*t)
+    return driving
+
+#parameters 
+N = 6
+wr = 1
+wq = 1
+chi = 0.05      # normally much smaller than wr and wq
+ep = 0.1 + 0j
+ep0 = 0.5
+tlist = np.linspace(0, 1000, 1000)
+
+sx = tensor(qeye(N),sigmax())
+sy = tensor(qeye(N),sigmay())
+sz = tensor(qeye(N),sigmaz())
+
+sm = tensor(qeye(N),sigmam())
+
+a = tensor(destroy(N),qeye(2))
+n = a.dag() * a 
+
+(sx-1j*sy)/2-sm
+# Hamiltonian 
+H = (wr * n + 0.5 * wq * sz 
+     + chi * n * sz )
+H0 = wr * n + 0.5 * wq * sz 
+H_int = chi * n * sz 
+H_d1 = a.dag()
+H_d2 = a
+H = [
+      H0+H_int, 
+     [H_d1,driving_func]]
+
+# Master Equations
+rho0 = tensor(basis(N,N-1), (basis(2,0)+0*basis(2,1)).unit())
+c_op = [a,sz,sm]
+result = mesolve(H, 
+                 rho0, tlist,c_op,args = {'A':1,'w':2*np.pi})
+
+#Results
+states = result.states 
+y0 = expect(n, states)
+yz = expect(sz, states)
+yx = expect(sx,states)
+yy = expect(sy,states)
+
+plt.figure(figsize=(4,3))
+plt.plot(tlist,y0)
+plt.title("Population number of cavity")
+plt.xlabel("t")
+plt.ylabel(r"$n=a^\dagger a$")
+plt.ylim(-0.001,0.03)
+plt.show()
+
+fig,ax = plt.subplots(2,2,figsize=(6,5))
+ax = ax.ravel()
+ax[0].plot(tlist,yx)
+ax[0].set_ylabel(r"$\langle\sigma_x\rangle$")
+ax[0].set_xlabel("t")
+ax[1].plot(tlist,yy)
+ax[1].set_ylabel(r"$\langle\sigma_y\rangle$")
+ax[1].set_xlabel("t")
+ax[2].plot(tlist,yz)
+ax[2].set_ylim(-1.2, 1.2)
+ax[2].set_ylabel(r"$\langle\sigma_z\rangle$")
+ax[3].plot(tlist,y0)
+ax[3].set_ylabel(r"$\langle a^\dagger a \rangle$")
+plt.suptitle("Obervables evolving with ME, dissipation")
+fig.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
